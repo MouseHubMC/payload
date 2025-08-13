@@ -60,6 +60,33 @@ public class Aimbot extends Module implements TickListener, Render3DListener, Lo
 			.displayName("Rotation Speed").description("Speed of the rotation.").defaultValue(1.0f).minValue(0.1f)
 			.maxValue(5.0f).step(0.1f).build();
 
+	private final FloatSetting smoothing = FloatSetting.builder()
+			.id("aimbot_smoothing")
+			.displayName("Smoothing")
+			.description("How smoothly the aimbot rotates (higher = smoother, lower = snappier).")
+			.defaultValue(5.0f)
+			.minValue(0.1f)
+			.maxValue(20.0f)
+			.step(0.1f)
+			.build();
+
+	private final FloatSetting randomness = FloatSetting.builder()
+			.id("aimbot_randomness")
+			.displayName("Randomness")
+			.description("Adds small random offsets to rotation for more human-like movement.")
+			.defaultValue(0.0f)
+			.minValue(0.0f)
+			.maxValue(5.0f)
+			.step(0.1f)
+			.build();
+
+	private final BooleanSetting aimWhileAttacking = BooleanSetting.builder()
+			.id("aimbot_attack_only")
+			.displayName("Aim Only While Attacking")
+			.description("Only aims while the attack button (left mouse) is held.")
+			.defaultValue(false)
+			.build();
+
 	private final FloatSetting priority = FloatSetting.builder()
 			.id("aimbot_prio")         // Consistent ID naming convention
 			.displayName("Priority")         // User-friendly display name
@@ -79,7 +106,10 @@ public class Aimbot extends Module implements TickListener, Render3DListener, Lo
 
 		this.addSetting(rotman);
 		this.addSetting(priority);
+		this.addSetting(aimWhileAttacking);
 		this.addSetting(rotationSpeed);
+		this.addSetting(smoothing);
+		this.addSetting(randomness);
 		this.addSetting(targetAnimals);
 		this.addSetting(targetPlayers);
 		this.addSetting(targetFriends);
@@ -93,120 +123,127 @@ public class Aimbot extends Module implements TickListener, Render3DListener, Lo
 		Payload.getInstance().eventManager.RemoveListener(Render3DListener.class, this);
 		Payload.getInstance().eventManager.RemoveListener(LookAtListener.class, this);
 	}
-		@Override
-		public void onEnable () {
-			Payload.getInstance().eventManager.AddListener(TickListener.class, this);
-			Payload.getInstance().eventManager.AddListener(Render3DListener.class, this);
-			Payload.getInstance().eventManager.AddListener(LookAtListener.class, this);
-		}
 
-		@Override
-		public void onToggle () {
+	@Override
+	public void onEnable() {
+		Payload.getInstance().eventManager.AddListener(TickListener.class, this);
+		Payload.getInstance().eventManager.AddListener(Render3DListener.class, this);
+		Payload.getInstance().eventManager.AddListener(LookAtListener.class, this);
+	}
 
-		}
+	@Override
+	public void onToggle() {
 
-		@Override
-		public void onRender (Render3DEvent event){
-			if (temp != null && rotman.getValue() == RotMode.Vanilla) {
-				Vec3d offset = Render3D.getEntityPositionOffsetInterpolated(temp,
-						event.getRenderTickCounter().getTickDelta(true));
-				Vec3d targetPos = temp.getEyePos().add(offset);
-				Vec3d playerPos = MC.player.getEyePos();
-				Vec3d direction = targetPos.subtract(playerPos).normalize();
+	}
 
-				float yaw = (float) Math.toDegrees(Math.atan2(direction.z, direction.x)) - 90F;
-				float pitch = (float) -Math.toDegrees(
-						Math.atan2(direction.y, Math.sqrt(direction.x * direction.x + direction.z * direction.z)));
-
-				float currentYaw = MC.player.getYaw();
-				float currentPitch = MC.player.getPitch();
-
-				float deltaYaw = MathHelper.wrapDegrees(yaw - currentYaw);
-				float deltaPitch = MathHelper.wrapDegrees(pitch - currentPitch);
-
-				float speed = rotationSpeed.getValue();
-				float smoothYaw = currentYaw + MathHelper.clamp(deltaYaw, -speed, speed);
-				float smoothPitch = currentPitch + MathHelper.clamp(deltaPitch, -speed, speed);
-
-				if (Math.abs(deltaYaw) > 180) {
-					smoothYaw = currentYaw - MathHelper.clamp(deltaYaw, -speed, speed);
-				}
-
-				MC.player.setYaw(smoothYaw);
-				MC.player.setPitch(smoothPitch);
+	@Override
+	public void onRender(Render3DEvent event) {
+		if (temp != null && rotman.getValue() == RotMode.Vanilla) {
+			// Attack-only check
+			if (aimWhileAttacking.getValue() && !MC.options.attackKey.isPressed()) {
+				return; // Don't aim unless attack key is pressed
 			}
+
+			Vec3d offset = Render3D.getEntityPositionOffsetInterpolated(temp,
+					event.getRenderTickCounter().getTickDelta(true));
+			Vec3d targetPos = temp.getEyePos().add(offset);
+			Vec3d playerPos = MC.player.getEyePos();
+			Vec3d direction = targetPos.subtract(playerPos).normalize();
+
+			float yaw = (float) Math.toDegrees(Math.atan2(direction.z, direction.x)) - 90F;
+			float pitch = (float) -Math.toDegrees(
+					Math.atan2(direction.y, Math.sqrt(direction.x * direction.x + direction.z * direction.z)));
+
+			// Apply randomness
+			float randYaw = yaw + ((float) (Math.random() - 0.5) * 2) * randomness.getValue();
+			float randPitch = pitch + ((float) (Math.random() - 0.5) * 2) * randomness.getValue();
+
+			float currentYaw = MC.player.getYaw();
+			float currentPitch = MC.player.getPitch();
+
+			// Smooth rotation using lerp
+			float smoothFactor = 1.0f / smoothing.getValue();
+			float smoothYaw = MathHelper.lerp(smoothFactor, currentYaw, randYaw);
+			float smoothPitch = MathHelper.lerp(smoothFactor, currentPitch, randPitch);
+
+			MC.player.setYaw(smoothYaw);
+			MC.player.setPitch(smoothPitch);
 		}
+	}
 
-		@Override
-		public void onTick (TickEvent.Pre event){
 
-		}
+	@Override
+	public void onTick(TickEvent.Pre event) {
 
-		@Override
-		public void onTick (TickEvent.Post event){
-			currentTick++;
+	}
 
-			float radiusSqr = radius.getValue() * radius.getValue();
+	@Override
+	public void onTick(TickEvent.Post event) {
+		currentTick++;
 
-			if (currentTick >= frequency.getValue()) {
-				LivingEntity entityFound = null;
+		float radiusSqr = radius.getValue() * radius.getValue();
 
-				// Check for players within range of the player.
-				if (this.targetPlayers.getValue()) {
-					for (AbstractClientPlayerEntity entity : MC.world.getPlayers()) {
-						// Skip player if targetFriends is false and the FriendsList contains the
-						// entity.
-						if (entity == MC.player)
+		if (currentTick >= frequency.getValue()) {
+			LivingEntity entityFound = null;
+
+			// Check for players within range of the player.
+			if (this.targetPlayers.getValue()) {
+				for (AbstractClientPlayerEntity entity : MC.world.getPlayers()) {
+					// Skip player if targetFriends is false and the FriendsList contains the
+					// entity.
+					if (entity == MC.player)
+						continue;
+
+					if (!targetFriends.getValue() && Payload.getInstance().friendsList.contains(entity))
+						continue;
+
+					if (entityFound == null)
+						entityFound = (LivingEntity) entity;
+					else {
+						double entityDistanceToPlayer = entity.squaredDistanceTo(MC.player);
+						if (entityDistanceToPlayer < entityFound.squaredDistanceTo(MC.player)
+								&& entityDistanceToPlayer < radiusSqr) {
+							entityFound = entity;
+						}
+					}
+				}
+			}
+
+			if (this.targetAnimals.getValue()) {
+				for (Entity entity : MC.world.getEntities()) {
+					if (entity instanceof LivingEntity) {
+						if (entity instanceof ClientPlayerEntity)
 							continue;
 
-						if (!targetFriends.getValue() && Payload.getInstance().friendsList.contains(entity))
+						double entityDistanceToPlayer = entity.squaredDistanceTo(MC.player);
+						if (entityDistanceToPlayer >= radiusSqr)
 							continue;
 
 						if (entityFound == null)
 							entityFound = (LivingEntity) entity;
-						else {
-							double entityDistanceToPlayer = entity.squaredDistanceTo(MC.player);
-							if (entityDistanceToPlayer < entityFound.squaredDistanceTo(MC.player)
-									&& entityDistanceToPlayer < radiusSqr) {
-								entityFound = entity;
-							}
+						else if (entityDistanceToPlayer < entityFound.squaredDistanceTo(MC.player)) {
+							entityFound = (LivingEntity) entity;
 						}
 					}
 				}
-
-				if (this.targetAnimals.getValue()) {
-					for (Entity entity : MC.world.getEntities()) {
-						if (entity instanceof LivingEntity) {
-							if (entity instanceof ClientPlayerEntity)
-								continue;
-
-							double entityDistanceToPlayer = entity.squaredDistanceTo(MC.player);
-							if (entityDistanceToPlayer >= radiusSqr)
-								continue;
-
-							if (entityFound == null)
-								entityFound = (LivingEntity) entity;
-							else if (entityDistanceToPlayer < entityFound.squaredDistanceTo(MC.player)) {
-								entityFound = (LivingEntity) entity;
-							}
-						}
-					}
-				}
-
-				temp = entityFound;
-				currentTick = 0;
-			} else {
-				if (temp != null && temp.squaredDistanceTo(MC.player) >= radiusSqr) {
-					temp = null;
-				}
-			}
-		}
-
-		@Override
-		public void onLook (LookAtEvent event){
-			if (temp != null && rotman.getValue() == RotMode.Payload) {
-				event.setTarget(temp.getEyePos(), Payload.getInstance().moduleManager.rotations.steps.getValue(), priority.getValue());
 			}
 
+			temp = entityFound;
+			currentTick = 0;
+		} else {
+			if (temp != null && temp.squaredDistanceTo(MC.player) >= radiusSqr) {
+				temp = null;
+			}
 		}
 	}
+
+	@Override
+	public void onLook(LookAtEvent event) {
+		if (temp != null && rotman.getValue() == RotMode.Payload) {
+			if (aimWhileAttacking.getValue() && !MC.options.attackKey.isPressed()) {
+				return; // Don't aim unless attack key is pressed
+			}
+			event.setTarget(temp.getEyePos(), Payload.getInstance().moduleManager.rotations.steps.getValue(), priority.getValue());
+		}
+	}
+}

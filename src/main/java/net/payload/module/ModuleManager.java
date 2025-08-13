@@ -150,6 +150,8 @@ public class ModuleManager implements KeyDownListener, Render2DListener {
 	public XRay xray = new XRay();
 	public YawLock yawLock = new YawLock();
 	public Zoom zoom = new Zoom();
+	public AutoClicker autoClicker = new AutoClicker();
+	public TriggerBot triggerBot = new TriggerBot();
 
 	public ModuleManager(List<IAddon> addons) {
 		try {

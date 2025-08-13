@@ -32,7 +32,7 @@ public class WatermarkHud extends HudWindow {
 	}
 
 	private String getWatermarkText() {
-		return "Payload pre-release";
+		return "monohack alpha-3.7.13";
 	}
 
 	private float calculateWidth() {
