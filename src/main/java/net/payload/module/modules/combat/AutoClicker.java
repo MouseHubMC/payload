@@ -137,9 +137,7 @@ public class AutoClicker extends Module implements TickListener {
         nextClickDelay = Math.max((long) (1000 / cps), (long) delay);
     }
 
-    /**
-     * @param event blah blah
-     */
+    /// @param event blah blah
     @Override
     public void onTick(TickEvent.Post event) {
 
