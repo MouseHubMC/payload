@@ -1,8 +1,3 @@
-
-
-/**
- * Aimbot Module
- */
 package net.payload.module.modules.combat;
 
 import net.payload.Payload;
