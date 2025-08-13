@@ -38,6 +38,7 @@ public class CommandManager {
 	public final CmdTP tp = new CmdTP();
 	public final CmdXRay xray = new CmdXRay();
 	public final CmdHistory history = new CmdHistory();
+	public final CmdServer server = new CmdServer();
 
 	public CommandManager(List<IAddon> addons) {
 		SettingManager.registerSetting(PREFIX);
