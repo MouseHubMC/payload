@@ -31,7 +31,7 @@ public class Aimbot extends Module implements TickListener, Render3DListener, Lo
 	private final EnumSetting<Aimbot.RotMode> rotman = EnumSetting.<Aimbot.RotMode>builder()
 			.id("aimbot_rotmode")
 			.displayName("Rotate Mode")
-			.defaultValue(RotMode.Payload)
+			.defaultValue(RotMode.Vanilla)
 			.build();
 
 	private BooleanSetting targetAnimals = BooleanSetting.builder().id("aimbot_target_mobs").displayName("Target Mobs")
