@@ -52,7 +52,6 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 	/// hud element private
 	private DubCountOptionsWindow dubCountOptionsWindow;
 	private ArmorHudOptionsWindow armorHudOptionsWindow;
-	private PrideSheepOptionsWindow prideSheepOptionsWindow;
 	private DVDLogoOptionsWindow dvdLogoOptionsWindow;
 	private ModuleArrayListHudOptionsWindow moduleArrayListHudOptionsWindow;
 	private WatermarkHudOptionsWindow watermarkHudOptionsWindow;
@@ -499,7 +498,6 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 		shulkCountHudOptionsWindow = new ShulkCountHudOptionsWindow();
 		dubCountOptionsWindow = new DubCountOptionsWindow();
 		armorHudOptionsWindow = new ArmorHudOptionsWindow();
-		prideSheepOptionsWindow = new PrideSheepOptionsWindow();
 		dvdLogoOptionsWindow = new DVDLogoOptionsWindow();
 		speedNumberHudOptionsWindow = new SpeedNumberHudOptionsWindow();
 		watermarkHudOptionsWindow = new WatermarkHudOptionsWindow();
@@ -815,9 +813,6 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 			case "ArmorHud":
 				hudPane.addWindow(armorHudOptionsWindow);
 				break;
-			case "PrideSheep":
-				hudPane.addWindow(prideSheepOptionsWindow);
-				break;
 			case "DVDLogo":
 				hudPane.addWindow(dvdLogoOptionsWindow);
 				break;
@@ -900,9 +895,6 @@ public class GuiManager implements KeyDownListener, TickListener, Render2DListen
 				break;
 			case "FakeCoords":
 				hudPane.removeWindow(fakeCoordsOptionsWindow);
-				break;
-			case "PrideSheep":
-				hudPane.removeWindow(prideSheepOptionsWindow);
 				break;
 			case "DVDLogo":
 				hudPane.removeWindow(dvdLogoOptionsWindow);
