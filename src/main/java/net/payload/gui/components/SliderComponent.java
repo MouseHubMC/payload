@@ -80,6 +80,7 @@ public class SliderComponent extends Component {
 	@Override
 	public void onMouseClick(MouseClickEvent event) {
 		super.onMouseClick(event);
+
 		if (event.button == MouseButton.LEFT) {
 			if (event.action == MouseAction.DOWN) {
 				if (hovered) {
@@ -90,7 +91,17 @@ public class SliderComponent extends Component {
 				isSliding = false;
 			}
 		}
+
+		if (event.button == MouseButton.MIDDLE && event.action == MouseAction.DOWN) {
+			if (hovered && floatSetting != null) {
+				floatSetting.setValue(floatSetting.getDefaultValue());
+				value = floatSetting.getDefaultValue();
+				currentSliderPosition = (float) Math.min(Math.max((value - minValue) / (maxValue - minValue), 0f), 1f);
+				event.cancel();
+			}
+		}
 	}
+
 
 	@Override
 	public void onMouseMove(MouseMoveEvent event) {
